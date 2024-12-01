@@ -3,15 +3,11 @@ package de.no3x.adventofcode.twentyfour.day1
 import kotlin.math.abs
 
 data class LocationIdPair(val first: LocationId, val second: LocationId) {
-    fun distance() : Int {
-        return first.distanceTo(second)
-    }
+    fun distance() : Int = first.distanceTo(second)
 }
 
 data class LocationId(val id: Int) {
-    fun distanceTo(other: LocationId) : Int {
-        return abs(this.id - other.id)
-    }
+    fun distanceTo(other: LocationId) : Int = abs(this.id - other.id)
 }
 
 class Day1 {
