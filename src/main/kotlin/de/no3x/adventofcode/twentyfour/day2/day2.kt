@@ -1,17 +1,19 @@
 package de.no3x.adventofcode.twentyfour.day2
 
+import kotlin.math.abs
+
 
 class Day2 {
 
     fun solve(list1: List<List<Int>>): Int {
-        return list1.count(::`areDecreasingBetween1And3And(AllPositiveOrAllNegative)`)
+        return list1.count(this::areAllPositiveOrAllNegativeAndDecreasingBetween1And3)
     }
 
-    fun `areDecreasingBetween1And3And(AllPositiveOrAllNegative)`(ints: List<Int>): Boolean {
-        val subtractions = ints
+    fun areAllPositiveOrAllNegativeAndDecreasingBetween1And3(ints: List<Int>): Boolean {
+        val subtrahends = ints
             .zipWithNext { a, b -> a - b }
-        return (subtractions.all { it > 0 } || subtractions.all { it < 0 }) && subtractions
-            .all { it in 1..3 || it in -1 downTo -3 }
+        return (subtrahends.all { it > 0 } || subtrahends.all { it < 0 })
+                && subtrahends.all { abs(it) in 1..3 }
     }
 }
 

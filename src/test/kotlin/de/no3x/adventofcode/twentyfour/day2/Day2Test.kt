@@ -23,7 +23,7 @@ class Day2Test {
     @Test
     fun `sample data 1 3 2 4 5 returns false`() {
 
-        val result = Day2().`areDecreasingBetween1And3And(AllPositiveOrAllNegative)`(listOf(1, 3, 2, 4, 5))
+        val result = Day2().areAllPositiveOrAllNegativeAndDecreasingBetween1And3(listOf(1, 3, 2, 4, 5))
 
         assertThat(result).isFalse()
     }
