@@ -3,21 +3,25 @@ package de.no3x.adventofcode.twentyfour.day4
 class Day4 {
 
     fun solve(matrix: List<List<Char>>): Int {
-        val chars = mutableListOf<Char>()
+        val allChars = mutableListOf<Char>()
         var currentMatrix = matrix
 
-        // apply counts for rotations of each rotation of the matrix
+        // apply counts for each rotation of the matrix, this way we can match forward and reverse spelled word
         repeat(4) {
-            // contains rows separated by '|' so words do not chain across diagonals
-            val currentMatrixChars: List<Char> = currentMatrix.flatMap { it + '|' }
-            val segmentChars = collectDiagonally(currentMatrix)
-            chars.addAll(segmentChars.toList())
-            chars.addAll(currentMatrixChars)
-            val rotated = rotateMatrix90CW(currentMatrix)
-            currentMatrix = rotated
+            val rotatedMatrix = rotateMatrix90CW(currentMatrix)
+            val diagonalChars = collectDiagonally(rotatedMatrix)
+
+            // contains rows separated by '|' so words do not chain across lines
+            val matrixChars = rotatedMatrix.flatMap { it + '|' }
+
+            // collect
+            allChars.addAll(diagonalChars.toList())
+            allChars.addAll(matrixChars)
+
+            currentMatrix = rotatedMatrix
         }
 
-        return countOccurrences(chars.joinToString(""), "XMAS")
+        return countOccurrences(allChars.joinToString(""), "XMAS")
     }
 }
 
@@ -38,26 +42,29 @@ inline fun <reified T> rotateMatrix90CW(matrix: List<List<T>>): List<List<T>> {
     return rotated
 }
 
-fun collectDiagonally(chars: List<List<Char>>): CharArray {
-    val ans: MutableList<Char> = ArrayList()
+fun collectDiagonally(matrix: List<List<Char>>): CharArray {
+    val chars = mutableListOf<Char>()
     val queue = ArrayDeque<Iterator<Char>>()
     var pos = 0
+
     do {
-        if (pos < chars.size) {
-            queue.addFirst(chars[pos].iterator())
+        if (pos < matrix.size) {
+            queue.addFirst(matrix[pos].iterator())
         }
-        var sz = queue.size
-        while (--sz >= 0) {
-            val cur = queue.removeFirst()
-            ans.add(cur.next())
-            if (cur.hasNext()) {
-                queue.addLast(cur)
+
+        var size = queue.size
+        while (--size >= 0) {
+            val current = queue.removeFirst()
+            chars.add(current.next())
+
+            if (current.hasNext()) {
+                queue.addLast(current)
             }
         }
         // add any char as separator so words do not chain across diagonals
-        ans.add('|')
+        chars.add('|')
         pos++
-    } while (queue.isNotEmpty() || pos < chars.size)
-    return ans.toCharArray()
-}
+    } while (queue.isNotEmpty() || pos < matrix.size)
 
+    return chars.toCharArray()
+}
