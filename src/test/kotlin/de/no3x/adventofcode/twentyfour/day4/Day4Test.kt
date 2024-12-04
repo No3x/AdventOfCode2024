@@ -24,7 +24,6 @@ class Day4Test {
         assertThat(result).isEqualTo(1)
     }
 
-
     @Test
     fun `sample data has 18 occurrences`(
         @GivenTextResource("de/no3x/adventofcode/twentyfour/day4/sample.csv") input: String

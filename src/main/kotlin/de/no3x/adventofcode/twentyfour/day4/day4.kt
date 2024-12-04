@@ -5,8 +5,11 @@ class Day4 {
     fun solve(matrix: List<List<Char>>): Int {
         val chars = mutableListOf<Char>()
         var currentMatrix = matrix
+
+        // apply counts for rotations of each rotation of the matrix
         repeat(4) {
-            val currentMatrixChars : List<Char> = currentMatrix.flatMap { it + '|' }
+            // contains rows separated by '|' so words do not chain across diagonals
+            val currentMatrixChars: List<Char> = currentMatrix.flatMap { it + '|' }
             val segmentChars = collectDiagonally(currentMatrix)
             chars.addAll(segmentChars.toList())
             chars.addAll(currentMatrixChars)
@@ -16,10 +19,6 @@ class Day4 {
 
         return countOccurrences(chars.joinToString(""), "XMAS")
     }
-}
-
-inline fun <reified T> List<List<T>>.to2DArray(): Array<Array<T>> {
-    return this.map { it.toTypedArray() }.toTypedArray()
 }
 
 fun countOccurrences(str: String, sub: String): Int {
@@ -55,8 +54,8 @@ fun collectDiagonally(chars: List<List<Char>>): CharArray {
                 queue.addLast(cur)
             }
         }
-            // add any char as separator so words do not chain across diagonals
-            ans.add('|')
+        // add any char as separator so words do not chain across diagonals
+        ans.add('|')
         pos++
     } while (queue.isNotEmpty() || pos < chars.size)
     return ans.toCharArray()
