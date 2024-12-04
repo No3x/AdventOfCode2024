@@ -6,8 +6,9 @@ class Day4 {
         val allChars = mutableListOf<Char>()
         var currentMatrix = matrix
 
-        // apply counts for each rotation of the matrix, this way we can match forward and reverse spelled word
-        repeat(4) {
+        // apply counts for 2 rotations of the matrix. this way we collect sequence of chars in any direction and diagonals
+        // optimization applied (was 4 repeats): with combined match to find XMAS and SAMX later on we do need only 2 and not 4 rotations
+        repeat(2) {
             val rotatedMatrix = rotateMatrix90CW(currentMatrix)
             val diagonalChars = collectDiagonally(rotatedMatrix)
 
@@ -26,7 +27,7 @@ class Day4 {
 }
 
 fun countOccurrences(str: String, sub: String): Int {
-    return str.windowed(sub.length) { it == sub }.count { it }
+    return str.windowed(sub.length) { it == sub || it == sub.reversed() }.count { it }
 }
 
 inline fun <reified T> rotateMatrix90CW(matrix: List<List<T>>): List<List<T>> {
