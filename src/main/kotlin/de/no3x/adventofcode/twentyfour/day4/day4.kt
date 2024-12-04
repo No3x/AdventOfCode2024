@@ -1,26 +1,20 @@
 package de.no3x.adventofcode.twentyfour.day4
 
+private const val SEPARATOR = '|'
+
 class Day4 {
 
     fun solve(matrix: List<List<Char>>): Int {
         val allChars = mutableListOf<Char>()
-        var currentMatrix = matrix
 
-        // apply counts for 2 rotations of the matrix. this way we collect sequence of chars in any direction and diagonals
-        // optimization applied (was 4 repeats): with combined match to find XMAS and SAMX later on we do need only 2 and not 4 rotations
-        repeat(2) {
-            val rotatedMatrix = rotateMatrix90CW(currentMatrix)
-            val diagonalChars = collectDiagonally(rotatedMatrix)
+        // apply counts for 2 sides of the matrix. this way we collect sequence of chars in any direction and diagonals
+        // optimization applied (was 4 rotations): with combined match to find XMAS and SAMX later on we do need only 1 rotation and not 4 rotations
+        allChars.addAll(collectDiagonally(matrix).toList())
+        allChars.addAll(matrix.flatMap { it + SEPARATOR })
 
-            // contains rows separated by '|' so words do not chain across lines
-            val matrixChars = rotatedMatrix.flatMap { it + '|' }
-
-            // collect
-            allChars.addAll(diagonalChars.toList())
-            allChars.addAll(matrixChars)
-
-            currentMatrix = rotatedMatrix
-        }
+        val rotatedMatrix = rotateMatrix90CW(matrix)
+        allChars.addAll(collectDiagonally(rotatedMatrix).toList())
+        allChars.addAll(rotatedMatrix.flatMap { it + SEPARATOR })
 
         return countOccurrences(allChars.joinToString(""), "XMAS")
     }
@@ -63,7 +57,7 @@ fun collectDiagonally(matrix: List<List<Char>>): CharArray {
             }
         }
         // add any char as separator so words do not chain across diagonals
-        chars.add('|')
+        chars.add(SEPARATOR)
         pos++
     } while (queue.isNotEmpty() || pos < matrix.size)
 
