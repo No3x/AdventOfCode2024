@@ -1,7 +1,5 @@
 package de.no3x.adventofcode.twentyfour.day5
 
-import kotlin.math.ceil
-
 data class Input(
     val rules: List<Pair<Int, Int>>, val updates: List<List<Int>>
 )
@@ -28,17 +26,11 @@ class Day5 {
             }
         }
     }
-
-
 }
 
 private fun List<List<Int>>.sumOfTheirMiddleElement(): Int {
-    return this.sumOf {
-        val size = it.size
-        assert(size > 2) {
-            "$it is too short"
-        }
-        val middle = if ((size % 2) == 0) size / 2 else ceil(size / 2f).toInt()
-        it[middle - 1]
+    return sumOf { list ->
+        require(list.size > 2) { "$list is too short" }
+        list[list.size / 2]
     }
 }
