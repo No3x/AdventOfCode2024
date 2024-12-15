@@ -98,11 +98,24 @@ class Board {
                 return true
             }
             Symbol.BOX -> {
-
+                canPush()
             }
             Symbol.ROBOT -> {
                 throw IllegalStateException("There is only one robot on the board so no position we try to move to should contain a robot.")
             }
+        }
+    }
+
+    private fun canPush(piece: Piece, direction: Direction): Boolean {
+        val tryPosition = piece.position() + direction
+        val pieceOnTryPosition = positions.toBiMap().inverse()[tryPosition]!!
+        return when (pieceOnTryPosition.symbol) {
+            Symbol.WALL -> {
+                return false
+            }
+            Symbol.ROBOT -> throw IllegalStateException("There is only one robot on the board and this case makes no sense.")
+            Symbol.BOX -> true
+            Symbol.EMPTY -> true
         }
     }
 
