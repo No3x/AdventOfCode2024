@@ -1,10 +1,13 @@
 package de.no3x.adventofcode.twentyfour.day15
 
 import com.google.common.collect.HashBiMap
+import java.lang.Math.pow
+import java.lang.Math.sqrt
+import kotlin.math.exp
 
 class Day15 {
 
-    fun solve(input: String): Long {
+    fun solve(input: String): Int {
 
         val rows = input.lines().size
         val columns = input.lines()[0].length
@@ -12,10 +15,8 @@ class Day15 {
         val (pieces, moves) = transformInput(input)
         val board = Board(rows, columns, pieces)
         board.applyMoves(moves)
-        return 14
+        return board.sumOfCoordinates()
     }
-
-    class Warehouse
 
     private fun transformInput(input: String): Pair<MutableList<Piece>, MutableList<Move>> {
         var separatorHit = false
@@ -49,10 +50,10 @@ fun <K, V> Map<K, V>.toBiMap() = HashBiMap.create(this)
 class Board {
     val rows: Int
     val columns: Int
-    val pieces: MutableList<Piece>
+    val pieces: List<Piece>
     val positions: MutableMap<Piece, Position>
 
-    constructor(rows: Int, columns: Int, pieces: MutableList<Piece>) {
+    constructor(rows: Int, columns: Int, pieces: List<Piece>) {
         this.rows = rows
         this.columns = columns
         this.pieces = pieces
@@ -81,14 +82,22 @@ class Board {
 
     fun tryMoveRobot(move: Move): Boolean {
         val robotPosition = getRobotPiece().position()
+        return tryMove(robotPosition, move)
+    }
+
+    private fun tryMove(
+        robotPosition: Position,
+        move: Move
+    ): Boolean {
         val tryPosition = robotPosition + move.direction
         val pieceOnTryPosition = positions.toBiMap().inverse()[tryPosition]!!
 
         println("Try to move to a position with piece of symbol ${pieceOnTryPosition.symbol}.")
-        return when (pieceOnTryPosition.symbol) {
+        val result = when (pieceOnTryPosition.symbol) {
             Symbol.WALL -> {
                 return false
             }
+
             Symbol.EMPTY -> {
                 positions.replace(pieceOnTryPosition, robotPosition)
                 //positions.toBiMap().inverse().put(robotPosition, pieceOnTryPosition)
@@ -97,13 +106,17 @@ class Board {
                 println(tryPosition)
                 return true
             }
+
             Symbol.BOX -> {
-                canPush()
+                canPush(pieceOnTryPosition, move.direction)
             }
+
             Symbol.ROBOT -> {
                 throw IllegalStateException("There is only one robot on the board so no position we try to move to should contain a robot.")
             }
         }
+        println("Result: $result.")
+        return result
     }
 
     private fun canPush(piece: Piece, direction: Direction): Boolean {
@@ -114,9 +127,16 @@ class Board {
                 return false
             }
             Symbol.ROBOT -> throw IllegalStateException("There is only one robot on the board and this case makes no sense.")
-            Symbol.BOX -> true
+            Symbol.BOX -> canPush(pieceOnTryPosition, direction)
             Symbol.EMPTY -> true
         }
+    }
+
+    fun sumOfCoordinates(): Int {
+        return positions
+            .filter { es -> es.key.symbol == Symbol.BOX }
+            .map { it.value }
+            .sumOf { it.x * 100 + it.y }
     }
 
 }
@@ -135,8 +155,10 @@ open class Vec2D(val x: Int, val y: Int) {
     }
 }
 
-class Piece(val symbol: Symbol) {
-
+data class Piece(val symbol: Symbol) {
+    override fun equals(other: Any?): Boolean {
+        return this === other
+    }
 }
 
 enum class Symbol(private val char: Char) {
