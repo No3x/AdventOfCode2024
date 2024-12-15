@@ -2,6 +2,7 @@ package de.no3x.adventofcode.twentyfour.day15
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.Comparator
 
 class BoardTest {
 
@@ -14,7 +15,7 @@ class BoardTest {
             Piece(Symbol.BOX),
             Piece(Symbol.EMPTY)
         )
-        val board = Board(8,8, pieces)
+        val board = Board(8, 8, pieces)
 
         val result = board.tryMoveRobot(Move(Direction.R))
 
@@ -30,7 +31,7 @@ class BoardTest {
             Piece(Symbol.BOX),
             Piece(Symbol.WALL)
         )
-        val board = Board(8,8, pieces)
+        val board = Board(8, 8, pieces)
 
         val result = board.tryMoveRobot(Move(Direction.R))
 
@@ -47,10 +48,18 @@ class BoardTest {
             Piece(Symbol.BOX),
             Piece(Symbol.EMPTY)
         )
-        val board = Board(1,5, pieces)
+        val board = Board(1, 5, pieces)
 
         board.applyMoves(listOf(Move(Direction.R)))
 
-        assertThat(board.positions).isEqualTo(false)
+        val positions = board.positions
+        val sortedWith = positions.entries
+            .sortedWith(compareBy({ it.value.x }, { it.value.y }))
+            .map { it.key.symbol }
+
+        assertThat(sortedWith)
+            .containsExactly(Symbol.EMPTY, Symbol.ROBOT, Symbol.BOX,
+                    Symbol.BOX,
+                    Symbol.BOX)
     }
 }
