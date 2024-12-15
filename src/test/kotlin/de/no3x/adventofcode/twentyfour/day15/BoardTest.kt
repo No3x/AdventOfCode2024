@@ -16,7 +16,7 @@ class BoardTest {
         )
         val board = Board(pieces)
 
-        val result = board.tryMoveRobot(Move(Direction.R))
+        val result = board.executeMove(Move(Direction.R))
 
         assertThat(result).isEqualTo(false)
     }
@@ -34,7 +34,7 @@ class BoardTest {
         )
         val board = Board(pieces)
 
-        val result = board.tryMoveRobot(Move(Direction.R))
+        val result = board.executeMove(Move(Direction.R))
 
         assertThat(result).isEqualTo(true)
     }
@@ -52,7 +52,7 @@ class BoardTest {
         )
         val board = Board( pieces)
 
-        val result = board.tryMoveRobot(Move(Direction.R))
+        val result = board.executeMove(Move(Direction.R))
 
         assertThat(result).isEqualTo(false)
     }
@@ -177,7 +177,7 @@ class BoardTest {
         )
         val board = Board(pieces)
 
-        val result = board.sumOfCoordinates()
+        val result = board.calculateBoxCoordinateSum()
 
         assertThat(result).isEqualTo(104)
     }

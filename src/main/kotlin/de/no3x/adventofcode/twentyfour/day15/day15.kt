@@ -3,31 +3,22 @@ package de.no3x.adventofcode.twentyfour.day15
 class Day15 {
 
     fun solve(input: String): Int {
-        val (pieces, moves) = transformInput(input)
+        val (pieces, moves) = parseInput(input)
         val board = Board(pieces)
         board.applyMoves(moves)
-        return board.sumOfCoordinates()
+        return board.calculateBoxCoordinateSum()
     }
 
-    private fun transformInput(input: String): Pair<List<MutableList<Piece>>, MutableList<Move>> {
-        var separatorHit = false
-        val pieces = mutableListOf<MutableList<Piece>>()
-        val moves = mutableListOf<Move>()
-        input.lines()
-            .forEach { line ->
-                if (line.isEmpty()) {
-                    separatorHit = true
-                    return@forEach
-                }
-                if (!separatorHit) {
-                    val piecesOfLine = line.map { Piece(Symbol.of(it)) }.toMutableList()
-                    pieces.add(piecesOfLine)
-                } else {
-                    moves.addAll(line.map {
-                        Move(Direction.of(it))
-                    })
-                }
-            }
+    private fun parseInput(input: String): Pair<List<MutableList<Piece>>, List<Move>> {
+        val (piecesLines, movesLines) = input.split("\n\r", limit = 2)
+            .map { it.lines() }
+            .takeIf { it.size == 2 } ?: throw IllegalArgumentException("Invalid input format")
+
+        val pieces = piecesLines.map { line ->
+            line.map { char -> Piece(Symbol.of(char)) }.toMutableList()
+        }
+        val moves = movesLines.joinToString("").map { Move(Direction.of(it)) }
+
         return pieces to moves
     }
 
@@ -58,10 +49,10 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     }
 
     fun applyMoves(moves: List<Move>) {
-        moves.forEach { move -> tryMoveRobot(move) }
+        moves.forEach { move -> executeMove(move) }
     }
 
-    fun tryMoveRobot(move: Move): Boolean {
+    fun executeMove(move: Move): Boolean {
         val robotPosition = findRobotPosition()
         val tryMove = getPushableMoves(robotPosition, move.direction)
         return tryMove != null
@@ -116,7 +107,7 @@ data class Board(val pieces: List<MutableList<Piece>>) {
         println("Board after: \n$this")
     }
 
-    fun sumOfCoordinates(): Int {
+    fun calculateBoxCoordinateSum(): Int {
         return pieces.flatMapIndexed { row, piecesOfRow ->
             piecesOfRow.mapIndexed { col, piece ->
                 Position(row, col) to piece
