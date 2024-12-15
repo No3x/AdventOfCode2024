@@ -75,7 +75,6 @@ data class Board(val pieces: List<MutableList<Piece>>) {
                     MoveToExecute(start, target)
                 }
             }
-
             Symbol.ROBOT -> throw IllegalStateException("Position already occupied by single robot")
         }
 
