@@ -38,15 +38,12 @@ data class Board(val pieces: List<MutableList<Piece>>) {
         return s
     }
 
-    private fun findRobotPosition(): Position {
-        return pieces.flatMapIndexed { lineIndex, line ->
-            line.mapIndexed { columnIndex, piece ->
-                Position(columnIndex, lineIndex) to piece
-            }
-        }
-            .find { (_, piece) -> piece.symbol == Symbol.ROBOT }!!
-            .first
-    }
+    private fun findRobotPosition(): Position =
+        pieces.flatMapIndexed { rowIndex, row ->
+            row.mapIndexed { colIndex, piece -> Position(colIndex, rowIndex) to piece }
+        }.firstOrNull { (_, piece) -> piece.symbol == Symbol.ROBOT }
+            ?.first ?: throw IllegalStateException("No robot found on the board")
+
 
     fun applyMoves(moves: List<Move>) {
         moves.forEach { move -> executeMove(move) }
