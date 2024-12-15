@@ -1,40 +1,31 @@
 package de.no3x.adventofcode.twentyfour.day15
 
-import com.google.common.collect.HashBiMap
-
 class Day15 {
 
     fun solve(input: String): Int {
-
-        val rows = input.lines().size
-        val columns = input.lines()[0].length
-
         val (pieces, moves) = transformInput(input)
-        val board = Board(rows, columns, pieces)
+        val board = Board(pieces)
         board.applyMoves(moves)
         return board.sumOfCoordinates()
     }
 
-    private fun transformInput(input: String): Pair<MutableList<Piece>, MutableList<Move>> {
+    private fun transformInput(input: String): Pair<List<MutableList<Piece>>, MutableList<Move>> {
         var separatorHit = false
-        val pieces = mutableListOf<Piece>()
+        val pieces = mutableListOf<MutableList<Piece>>()
         val moves = mutableListOf<Move>()
         input.lines()
             .forEach { line ->
-                run {
-                    if (line.isEmpty()) {
-                        separatorHit = true
-                        return@forEach
-                    }
-                    if (!separatorHit) {
-                        pieces.addAll(line.map {
-                            Piece(Symbol.of(it))
-                        })
-                    } else {
-                        moves.addAll(line.map {
-                            Move(Direction.of(it))
-                        })
-                    }
+                if (line.isEmpty()) {
+                    separatorHit = true
+                    return@forEach
+                }
+                if (!separatorHit) {
+                    val piecesOfLine = line.map { Piece(Symbol.of(it)) }.toMutableList()
+                    pieces.add(piecesOfLine)
+                } else {
+                    moves.addAll(line.map {
+                        Move(Direction.of(it))
+                    })
                 }
             }
         return pieces to moves
@@ -42,125 +33,95 @@ class Day15 {
 
 }
 
-class Board {
-    val rows: Int
-    val columns: Int
-    val pieces: List<Piece>
-    val positions: MutableMap<Piece, Position>
+data class Board(val pieces: List<MutableList<Piece>>) {
+    val rows: Int get() = pieces.size
+    val columns: Int get() = pieces[0].size
 
-    constructor(rows: Int, columns: Int, pieces: List<Piece>) {
-        this.rows = rows
-        this.columns = columns
-        this.pieces = pieces
-
-        val map = mutableMapOf<Piece, Position>()
-        for ((rowIndex, piecesInRow) in pieces.chunked(columns).withIndex()) {
-            for ((colIndex, piece) in piecesInRow.withIndex()) {
-                val position = Position(rowIndex, colIndex)
-                map[piece] = position
+    private fun findRobotPosition(): Position {
+        return pieces.flatMapIndexed { lineIndex, line ->
+                line.mapIndexed { columnIndex, piece ->
+                        Position(columnIndex, lineIndex) to piece
+                    }
             }
-        }
-        this.positions = map
-    }
-
-    private fun getRobotPiece(): Piece {
-        return pieces.first { it.symbol == Symbol.ROBOT }
+            .find { (_, piece) -> piece.symbol == Symbol.ROBOT }!!
+            .first
     }
 
     fun applyMoves(moves: List<Move>) {
         moves.forEach { move -> tryMoveRobot(move) }
     }
 
-    private fun Piece.position(): Position {
-        return positions[this]!!
-    }
-
     fun tryMoveRobot(move: Move): Boolean {
-        val robotPosition = getRobotPiece().position()
-        return tryMove(robotPosition, move)
+        val robotPosition = findRobotPosition()
+        val tryMove = getPushableMoves(robotPosition, move.direction)
+        return tryMove!=null
     }
 
-    private fun tryMove(
-        robotPosition: Position,
-        move: Move
-    ): Boolean {
-        val tryPosition = robotPosition + move.direction
+    private fun getPushableMoves(
+        startPosition: Position,
+        direction: Direction
+    ): MoveToExecute? {
+        val tryPosition = startPosition + direction
         val pieceOnTryPosition = getPieceByPosition(tryPosition)
-
         println("Try to move to a position with piece of symbol ${pieceOnTryPosition.symbol}.")
-        val result = when (pieceOnTryPosition.symbol) {
-            Symbol.WALL -> {
-                return false
-            }
 
+        val result: MoveToExecute? = when (pieceOnTryPosition.symbol) {
+            Symbol.WALL -> null
             Symbol.EMPTY -> {
-                return true
+                MoveToExecute(startPosition, getPieceByPosition(startPosition), tryPosition, pieceOnTryPosition)
             }
-
             Symbol.BOX -> {
-                canPush(pieceOnTryPosition, move.direction)
+                val pushableMoves = getPushableMoves(tryPosition, direction)
+                if (pushableMoves != null) {
+                    MoveToExecute(startPosition, getPieceByPosition(startPosition), tryPosition, pieceOnTryPosition)
+                } else {
+                    null
+                }
             }
-
             Symbol.ROBOT -> {
                 throw IllegalStateException("There is only one robot on the board so no position we try to move to should contain a robot.")
             }
         }
+
+        if (result != null) {
+            move(result.fromPosition, result.toPosition)
+        }
+
         println("Result: $result.")
-
-        if(result) {
-            swap(robotPosition, getRobotPiece(), tryPosition, pieceOnTryPosition )
-        }
-
-        return result
-    }
-
-    private fun canPush(piece: Piece, direction: Direction): Boolean {
-        val tryPosition = piece.position() + direction
-        val pieceOnTryPosition = getPieceByPosition(tryPosition)
-        val result = when (pieceOnTryPosition.symbol) {
-            Symbol.WALL -> {
-                return false
-            }
-            Symbol.ROBOT -> throw IllegalStateException("There is only one robot on the board and this case makes no sense.")
-            Symbol.BOX -> canPush(pieceOnTryPosition, direction)
-            Symbol.EMPTY -> true
-        }
-
-        if(result) {
-            swap(piece.position(), piece, tryPosition, pieceOnTryPosition )
-        }
-
         return result
     }
 
     private fun getPieceByPosition(tryPosition: Position): Piece {
-        return positions.entries
-            .filter { it.key.position() == tryPosition }
-            .map { it.key }
-            .first()
+        return pieces[tryPosition.row][tryPosition.column]
     }
 
-    private fun swap(
+    private fun move(
         fromPosition: Position,
-        fromPiece: Piece,
-        toPosition: Position,
-        toPiece: Piece
+        toPosition: Position
     ) {
-        println("Try to swap $fromPiece ${fromPosition} with $toPiece ${toPosition}")
-
-        positions.replace(fromPiece, toPosition)
-        //positions.toBiMap().inverse().put(robotPosition, pieceOnTryPosition)
-        positions.replace(toPiece, fromPosition)
-        //positions.toBiMap().inverse().put(tryPosition, getRobotPiece())
-        //println(tryPosition)
+        println("Try to move from $fromPosition to $toPosition")
+        pieces[toPosition.row][toPosition.column] = pieces[fromPosition.row][fromPosition.column]
+        pieces[fromPosition.row][fromPosition.column] = Piece(Symbol.EMPTY)
+        println("")
     }
 
     fun sumOfCoordinates(): Int {
-        return positions
-            .filter { es -> es.key.symbol == Symbol.BOX }
-            .map { it.value }
-            .sumOf { it.x * 100 + it.y }
+        return pieces.flatMapIndexed { row, piecesOfRow ->
+            piecesOfRow.mapIndexed { col, piece ->
+                Position(row, col) to piece
+            }
+        }.filter { (_, piece) ->
+            piece.symbol == Symbol.BOX
+        }.sumOf {(position, _) ->
+            position.row * 100 + position.column
+        }
     }
+}
+
+class MoveToExecute(  val fromPosition: Position,
+                      val fromPiece: Piece,
+                      val toPosition: Position,
+                      val toPiece: Piece) {
 
 }
 
