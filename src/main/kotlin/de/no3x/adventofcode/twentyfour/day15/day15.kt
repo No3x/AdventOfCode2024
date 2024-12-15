@@ -10,25 +10,10 @@ class Day15 {
     }
 
     private fun transformInput(input: String): Pair<List<MutableList<Piece>>, MutableList<Move>> {
-        var separatorHit = false
-        val pieces = mutableListOf<MutableList<Piece>>()
-        val moves = mutableListOf<Move>()
-        input.lines()
-            .forEach { line ->
-                if (line.isEmpty()) {
-                    separatorHit = true
-                    return@forEach
-                }
-                if (!separatorHit) {
-                    val piecesOfLine = line.map { Piece(Symbol.of(it)) }.toMutableList()
-                    pieces.add(piecesOfLine)
-                } else {
-                    moves.addAll(line.map {
-                        Move(Direction.of(it))
-                    })
-                }
-            }
-        return pieces to moves
+        val (pieceLines, moveLines) = input.split("\r\n\r\n").map { it.lines() }
+        val pieces = pieceLines.map { line -> line.map { Piece(Symbol.of(it)) }.toMutableList() }
+        val moves = moveLines.flatMap { line -> line.map { Move(Direction.of(it)) } }
+        return pieces to moves.toMutableList()
     }
 
 }
@@ -73,32 +58,20 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     ): MoveToExecute? {
         val tryPosition = startPosition + direction
         val pieceOnTryPosition = getPieceByPosition(tryPosition)
-        println("Current Position is $startPosition with symbol ${getPieceByPosition(startPosition).symbol} and try to move to $tryPosition with symbol $pieceOnTryPosition. Try to move in direction $direction to a position with piece of symbol ${pieceOnTryPosition.symbol}.")
-
-        val result: MoveToExecute? = when (pieceOnTryPosition.symbol) {
+        return when (pieceOnTryPosition.symbol) {
             Symbol.WALL -> null
-            Symbol.EMPTY -> {
-                MoveToExecute(startPosition, tryPosition)
-            }
+            Symbol.EMPTY -> MoveToExecute(startPosition, tryPosition)
             Symbol.BOX -> {
-                val pushableMoves = getPushableMoves(tryPosition, direction)
-                if (pushableMoves != null) {
+                getPushableMoves(tryPosition, direction)?.let {
                     MoveToExecute(startPosition, tryPosition)
-                } else {
-                    null
                 }
             }
-            Symbol.ROBOT -> {
-                throw IllegalStateException("There is only one robot on the board so no position we try to move to should contain a robot.")
-            }
-        }
 
-        if (result != null) {
-            move(result.fromPosition, result.toPosition)
+            Symbol.ROBOT -> throw IllegalStateException("There is only one robot on the board so no position we try to move to should contain a robot.")
+        }?.also {
+            println("Result: $it.")
+            move(it.fromPosition, it.toPosition)
         }
-
-        println("Result: $result.")
-        return result
     }
 
     private fun getPieceByPosition(tryPosition: Position): Piece {
