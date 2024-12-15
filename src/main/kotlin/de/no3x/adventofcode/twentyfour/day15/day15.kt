@@ -9,16 +9,25 @@ class Day15 {
         return board.calculateBoxCoordinateSum()
     }
 
-    private fun parseInput(input: String): Pair<List<MutableList<Piece>>, List<Move>> {
-        val (piecesLines, movesLines) = input.split("\n\r", limit = 2)
-            .map { it.lines() }
-            .takeIf { it.size == 2 } ?: throw IllegalArgumentException("Invalid input format")
-
-        val pieces = piecesLines.map { line ->
-            line.map { char -> Piece(Symbol.of(char)) }.toMutableList()
-        }
-        val moves = movesLines.joinToString("").map { Move(Direction.of(it)) }
-
+    private fun parseInput(input: String): Pair<List<MutableList<Piece>>, MutableList<Move>> {
+        var separatorHit = false
+        val pieces = mutableListOf<MutableList<Piece>>()
+        val moves = mutableListOf<Move>()
+        input.lines()
+            .forEach { line ->
+                if (line.isEmpty()) {
+                    separatorHit = true
+                    return@forEach
+                }
+                if (!separatorHit) {
+                    val piecesOfLine = line.map { Piece(Symbol.of(it)) }.toMutableList()
+                    pieces.add(piecesOfLine)
+                } else {
+                    moves.addAll(line.map {
+                        Move(Direction.of(it))
+                    })
+                }
+            }
         return pieces to moves
     }
 
@@ -51,26 +60,27 @@ data class Board(val pieces: List<MutableList<Piece>>) {
 
     fun executeMove(move: Move): Boolean {
         val robotPosition = findRobotPosition()
-        val moveToExecute = determineMove(robotPosition, move.direction)
+        val moveToExecute = determineAndExecuteMove(robotPosition, move.direction)
         return moveToExecute != null
     }
 
-    private fun determineMove(start: Position, direction: Direction): MoveToExecute? {
+    private fun determineAndExecuteMove(start: Position, direction: Direction): MoveToExecute? {
         val target = start + direction
 
         val result = when (getPieceByPosition(target).symbol) {
             Symbol.WALL -> null
             Symbol.EMPTY -> MoveToExecute(start, target)
             Symbol.BOX -> {
-                determineMove(target, direction)?.let {
+                determineAndExecuteMove(target, direction)?.let { // ?. is very important here
                     MoveToExecute(start, target)
                 }
             }
+
             Symbol.ROBOT -> throw IllegalStateException("Position already occupied by single robot")
         }
 
         result?.let {
-            move(result)
+            move(it)
         }
 
         println("Result: $result.")
@@ -82,7 +92,7 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     }
 
     private fun move(move: MoveToExecute) {
-       move(move.fromPosition, move.toPosition)
+        move(move.fromPosition, move.toPosition)
     }
 
     private fun move(
@@ -114,25 +124,18 @@ class MoveToExecute(
     val toPosition: Position
 )
 
-data class Position(val row: Int, val column: Int) : Vec2D(row, column) {
+data class Position(val row: Int, val column: Int) {
     operator fun plus(direction: Direction): Position {
-        return Position(this + direction.directionVector)
-    }
-
-    constructor(vec2D: Vec2D) : this(vec2D.x, vec2D.y)
-}
-
-open class Vec2D(val x: Int, val y: Int) {
-    operator fun plus(vec2D: Vec2D): Vec2D {
-        return Vec2D(this.x + vec2D.x, this.y + vec2D.y)
+        val newVec = Vec2D(row, column) + direction.directionVector
+        return Position(newVec.x, newVec.y)
     }
 }
 
-class Piece(val symbol: Symbol) {
-    override fun toString(): String {
-        return symbol.name
-    }
+data class Vec2D(val x: Int, val y: Int) {
+    operator fun plus(other: Vec2D): Vec2D = Vec2D(this.x + other.x, this.y + other.y)
 }
+
+data class Piece(val symbol: Symbol)
 
 enum class Symbol(val char: Char) {
     ROBOT('@'),
@@ -141,7 +144,8 @@ enum class Symbol(val char: Char) {
     WALL('#');
 
     companion object {
-        fun of(it: Char): Symbol = Symbol.entries.first { s -> s.char == it }
+        fun of(char: Char): Symbol = entries.find { it.char == char }
+            ?: throw IllegalArgumentException("Unknown symbol: $char")
     }
 }
 
@@ -155,6 +159,7 @@ enum class Direction(private val char: Char, val directionVector: Vec2D) {
     L('<', Vec2D(-1, 0));
 
     companion object {
-        fun of(it: Char): Direction = Direction.entries.first { s -> s.char == it }
+        fun of(char: Char): Direction = entries.find { it.char == char }
+            ?: throw IllegalArgumentException("Unknown direction: $char")
     }
 }
