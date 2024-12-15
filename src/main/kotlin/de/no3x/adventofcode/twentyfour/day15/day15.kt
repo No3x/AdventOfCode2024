@@ -136,7 +136,7 @@ class MoveToExecute(
 
 data class Position(val row: Int, val column: Int) : Vec2D(row, column) {
     operator fun plus(direction: Direction): Position {
-        return Position(this + direction.eigenvector)
+        return Position(this + direction.directionVector)
     }
 
     constructor(vec2D: Vec2D) : this(vec2D.x, vec2D.y)
@@ -168,7 +168,7 @@ enum class Symbol(val char: Char) {
 data class Move(val direction: Direction) {
 }
 
-enum class Direction(private val char: Char, val eigenvector: Vec2D) {
+enum class Direction(private val char: Char, val directionVector: Vec2D) {
     U('^', Vec2D(0, -1)),
     R('>', Vec2D(1, 0)),
     D('v', Vec2D(0, 1)),
