@@ -13,7 +13,7 @@ class Day15Test {
     fun `sample is 2028`(
         @GivenTextResource("de/no3x/adventofcode/twentyfour/day15/sample.csv") input: String
     ) {
-        val result = Day15().solve(input.lines())
+        val result = Day15().solve(input)
 
         assertThat(result).isEqualTo(2028)
     }
@@ -23,7 +23,7 @@ class Day15Test {
     fun `puzzle data input`(
         @GivenTextResource("de/no3x/adventofcode/twentyfour/day15/puzzle.csv") input: String
     ) {
-        val result = Day15().solve(input.lines())
+        val result = Day15().solve(input)
 
         println(result)
         assertThat(result).isNotNull()
