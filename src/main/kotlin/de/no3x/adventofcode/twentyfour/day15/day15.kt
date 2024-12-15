@@ -36,7 +36,16 @@ class Day15 {
 data class Board(val pieces: List<MutableList<Piece>>) {
     val rows: Int get() = pieces.size
     val columns: Int get() = pieces[0].size
-
+    override fun toString(): String {
+        var s = ""
+        pieces.forEach {
+            it.forEach{
+                s += it.symbol.char.toString() + ""
+            }
+            s += "\n"
+        }
+        return s
+    }
     private fun findRobotPosition(): Position {
         return pieces.flatMapIndexed { lineIndex, line ->
                 line.mapIndexed { columnIndex, piece ->
@@ -63,7 +72,7 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     ): MoveToExecute? {
         val tryPosition = startPosition + direction
         val pieceOnTryPosition = getPieceByPosition(tryPosition)
-        println("Try to move to a position with piece of symbol ${pieceOnTryPosition.symbol}.")
+        println("Current Position is $startPosition with symbol ${getPieceByPosition(startPosition).symbol} and try to move to $tryPosition with symbol $pieceOnTryPosition. Try to move in direction $direction to a position with piece of symbol ${pieceOnTryPosition.symbol}.")
 
         val result: MoveToExecute? = when (pieceOnTryPosition.symbol) {
             Symbol.WALL -> null
@@ -92,7 +101,7 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     }
 
     private fun getPieceByPosition(tryPosition: Position): Piece {
-        return pieces[tryPosition.row][tryPosition.column]
+        return pieces[tryPosition.column][tryPosition.row]
     }
 
     private fun move(
@@ -100,9 +109,10 @@ data class Board(val pieces: List<MutableList<Piece>>) {
         toPosition: Position
     ) {
         println("Try to move from $fromPosition to $toPosition")
-        pieces[toPosition.row][toPosition.column] = pieces[fromPosition.row][fromPosition.column]
-        pieces[fromPosition.row][fromPosition.column] = Piece(Symbol.EMPTY)
-        println("")
+        println("Board before: \n$this")
+        pieces[toPosition.column][toPosition.row] = pieces[fromPosition.column][fromPosition.row]
+        pieces[fromPosition.column][fromPosition.row] = Piece(Symbol.EMPTY)
+        println("Board after: \n$this")
     }
 
     fun sumOfCoordinates(): Int {
@@ -145,7 +155,7 @@ class Piece(val symbol: Symbol) {
     }
 }
 
-enum class Symbol(private val char: Char) {
+enum class Symbol( val char: Char) {
     ROBOT('@'),
     BOX('O'),
     EMPTY('.'),
@@ -160,10 +170,10 @@ data class Move(val direction: Direction) {
 }
 
 enum class Direction(private val char: Char, val eigenvector: Vec2D) {
-    U('^', Vec2D(-1, 0)),
-    R('>', Vec2D(0, 1)),
-    D('v', Vec2D(1, 0)),
-    L('<', Vec2D(0, -1));
+    U('^', Vec2D(0, -1)),
+    R('>', Vec2D(1, 0)),
+    D('v', Vec2D(0, 1)),
+    L('<', Vec2D(-1, 0));
 
     companion object {
         fun of(it: Char): Direction = Direction.entries.first { s -> s.char == it }
