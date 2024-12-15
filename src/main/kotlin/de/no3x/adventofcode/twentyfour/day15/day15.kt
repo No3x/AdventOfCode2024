@@ -39,19 +39,20 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     override fun toString(): String {
         var s = ""
         pieces.forEach {
-            it.forEach{
+            it.forEach {
                 s += it.symbol.char.toString() + ""
             }
             s += "\n"
         }
         return s
     }
+
     private fun findRobotPosition(): Position {
         return pieces.flatMapIndexed { lineIndex, line ->
-                line.mapIndexed { columnIndex, piece ->
-                        Position(columnIndex, lineIndex) to piece
-                    }
+            line.mapIndexed { columnIndex, piece ->
+                Position(columnIndex, lineIndex) to piece
             }
+        }
             .find { (_, piece) -> piece.symbol == Symbol.ROBOT }!!
             .first
     }
@@ -63,7 +64,7 @@ data class Board(val pieces: List<MutableList<Piece>>) {
     fun tryMoveRobot(move: Move): Boolean {
         val robotPosition = findRobotPosition()
         val tryMove = getPushableMoves(robotPosition, move.direction)
-        return tryMove!=null
+        return tryMove != null
     }
 
     private fun getPushableMoves(
@@ -77,12 +78,12 @@ data class Board(val pieces: List<MutableList<Piece>>) {
         val result: MoveToExecute? = when (pieceOnTryPosition.symbol) {
             Symbol.WALL -> null
             Symbol.EMPTY -> {
-                MoveToExecute(startPosition, getPieceByPosition(startPosition), tryPosition, pieceOnTryPosition)
+                MoveToExecute(startPosition, tryPosition)
             }
             Symbol.BOX -> {
                 val pushableMoves = getPushableMoves(tryPosition, direction)
                 if (pushableMoves != null) {
-                    MoveToExecute(startPosition, getPieceByPosition(startPosition), tryPosition, pieceOnTryPosition)
+                    MoveToExecute(startPosition, tryPosition)
                 } else {
                     null
                 }
@@ -122,18 +123,16 @@ data class Board(val pieces: List<MutableList<Piece>>) {
             }
         }.filter { (_, piece) ->
             piece.symbol == Symbol.BOX
-        }.sumOf {(position, _) ->
+        }.sumOf { (position, _) ->
             position.row * 100 + position.column
         }
     }
 }
 
-class MoveToExecute(  val fromPosition: Position,
-                      val fromPiece: Piece,
-                      val toPosition: Position,
-                      val toPiece: Piece) {
-
-}
+class MoveToExecute(
+    val fromPosition: Position,
+    val toPosition: Position
+)
 
 data class Position(val row: Int, val column: Int) : Vec2D(row, column) {
     operator fun plus(direction: Direction): Position {
@@ -155,7 +154,7 @@ class Piece(val symbol: Symbol) {
     }
 }
 
-enum class Symbol( val char: Char) {
+enum class Symbol(val char: Char) {
     ROBOT('@'),
     BOX('O'),
     EMPTY('.'),
