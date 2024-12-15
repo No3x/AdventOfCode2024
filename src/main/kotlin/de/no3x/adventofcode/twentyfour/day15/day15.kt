@@ -51,38 +51,26 @@ data class Board(val pieces: List<MutableList<Piece>>) {
 
     fun executeMove(move: Move): Boolean {
         val robotPosition = findRobotPosition()
-        val tryMove = getPushableMoves(robotPosition, move.direction)
-        return tryMove != null
+        val moveToExecute = determineMove(robotPosition, move.direction)
+        return moveToExecute != null
     }
 
-    private fun getPushableMoves(
-        startPosition: Position,
-        direction: Direction
-    ): MoveToExecute? {
-        val tryPosition = startPosition + direction
-        val pieceOnTryPosition = getPieceByPosition(tryPosition)
-        println("Current Position is $startPosition with symbol ${getPieceByPosition(startPosition).symbol} and try to move to $tryPosition with symbol $pieceOnTryPosition. Try to move in direction $direction to a position with piece of symbol ${pieceOnTryPosition.symbol}.")
+    private fun determineMove(start: Position, direction: Direction): MoveToExecute? {
+        val target = start + direction
 
-        val result: MoveToExecute? = when (pieceOnTryPosition.symbol) {
+        val result = when (getPieceByPosition(target).symbol) {
             Symbol.WALL -> null
-            Symbol.EMPTY -> {
-                MoveToExecute(startPosition, tryPosition)
-            }
+            Symbol.EMPTY -> MoveToExecute(start, target)
             Symbol.BOX -> {
-                val pushableMoves = getPushableMoves(tryPosition, direction)
-                if (pushableMoves != null) {
-                    MoveToExecute(startPosition, tryPosition)
-                } else {
-                    null
+                determineMove(target, direction)?.let {
+                    MoveToExecute(start, target)
                 }
             }
-            Symbol.ROBOT -> {
-                throw IllegalStateException("There is only one robot on the board so no position we try to move to should contain a robot.")
-            }
+            Symbol.ROBOT -> throw IllegalStateException("Position already occupied by single robot")
         }
 
-        if (result != null) {
-            move(result.fromPosition, result.toPosition)
+        result?.let {
+            move(result)
         }
 
         println("Result: $result.")
@@ -91,6 +79,10 @@ data class Board(val pieces: List<MutableList<Piece>>) {
 
     private fun getPieceByPosition(tryPosition: Position): Piece {
         return pieces[tryPosition.column][tryPosition.row]
+    }
+
+    private fun move(move: MoveToExecute) {
+       move(move.fromPosition, move.toPosition)
     }
 
     private fun move(
